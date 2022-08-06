@@ -6,6 +6,8 @@ import numpy as np
 from io import BytesIO
 import win32clipboard as clip
 import win32con
+import pyautogui
+
 
 
 class auto_screenshot:
@@ -22,10 +24,10 @@ class auto_screenshot:
         # After the second snapshot is taken, compare the first and the second snapshot to each other, spotting for difference between them.
         # If the difference goes past a N threshold, perform screenshot and paste into document.
         
-        snapshot1 = cv2.cvtColor(np.array(ImageGrab.grab(bbox=(self.SAMPLE_REGION[0][0]+27, self.SAMPLE_REGION[0][1]+58, self.SAMPLE_REGION[1][0]+170, self.SAMPLE_REGION[1][1]+192))), cv2.COLOR_BGR2GRAY)
+        snapshot1 = cv2.cvtColor(np.array(ImageGrab.grab(bbox=(self.SAMPLE_REGION[0][0], self.SAMPLE_REGION[0][1], self.SAMPLE_REGION[1][0], self.SAMPLE_REGION[1][1]))), cv2.COLOR_BGR2GRAY)
         #print("snapshot1 is taken")
         cv2.waitKey(500)
-        snapshot2 = cv2.cvtColor(np.array(ImageGrab.grab(bbox=(self.SAMPLE_REGION[0][0]+27, self.SAMPLE_REGION[0][1]+58, self.SAMPLE_REGION[1][0]+170, self.SAMPLE_REGION[1][1]+192))), cv2.COLOR_BGR2GRAY)
+        snapshot2 = cv2.cvtColor(np.array(ImageGrab.grab(bbox=(self.SAMPLE_REGION[0][0], self.SAMPLE_REGION[0][1], self.SAMPLE_REGION[1][0], self.SAMPLE_REGION[1][1]))), cv2.COLOR_BGR2GRAY)
         #print("snapshot2 is taken")
         
         # INSERT CODE HERE >>>>>....
@@ -35,7 +37,7 @@ class auto_screenshot:
             
             # copy screenshot to clipboard
             self.output = BytesIO()            
-            self.take_screenshot = ImageGrab.grab(bbox=(self.SS_REGION[0][0]+27, self.SS_REGION[0][1]+58, self.SS_REGION[1][0]+170, self.SS_REGION[1][1]+192))
+            self.take_screenshot = ImageGrab.grab(bbox=(self.SS_REGION[0][0], self.SS_REGION[0][1], self.SS_REGION[1][0], self.SS_REGION[1][1]))
             self.take_screenshot.convert('RGB').save(self.output, 'BMP')
             self.ss_data = self.output.getvalue()[14:]
             clip.OpenClipboard()
@@ -57,11 +59,25 @@ class auto_screenshot:
         self.CLICK_COUNT = 0
         self.SS_REGION = []
         def manager_ss():
-            self.SS_REGION.append(mouse.get_position())
-            self.CLICK_COUNT += 1
-            if self.CLICK_COUNT == 2:
+            
+            def delay():
                 mouse.unhook_all()
+                gui.set_ss_area['text'] = "Set screenshot region"
+
                 print(self.SS_REGION)
+
+            
+            self.SS_REGION.append(pyautogui.position())
+            self.CLICK_COUNT += 1
+            
+            if self.CLICK_COUNT == 1:
+                gui.set_ss_area['text'] = f"Corner1: {pyautogui.position()}"
+
+            
+            if self.CLICK_COUNT == 2:
+                gui.set_ss_area['text'] = f"Corner2: {pyautogui.position()}"
+                gui.set_ss_area.after(1000, lambda: delay())
+                
         mouse.on_click(lambda: manager_ss())
         
         
@@ -69,11 +85,26 @@ class auto_screenshot:
         self.CLICK_COUNT = 0
         self.SAMPLE_REGION = []
         def manager_sample():
-            self.SAMPLE_REGION.append(mouse.get_position())
-            self.CLICK_COUNT += 1
-            if self.CLICK_COUNT == 2:
+            
+            
+            def delay():
                 mouse.unhook_all()
+                gui.set_sample_area['text'] = "Set sample area"
                 print(self.SAMPLE_REGION)
+            
+            self.SAMPLE_REGION.append(pyautogui.position())
+            
+            self.CLICK_COUNT += 1
+            
+            if self.CLICK_COUNT == 1:
+                gui.set_sample_area['text'] = f"Corner1: {pyautogui.position()}"
+            
+            elif self.CLICK_COUNT == 2:
+                gui.set_sample_area['text'] = f"Corner2: {pyautogui.position()}"
+                gui.set_sample_area.after(1000, lambda: delay())
+            
+
+
                 
         mouse.on_click(lambda: manager_sample())            
     
@@ -81,7 +112,7 @@ class auto_screenshot:
     def view_screenshot_region(self,state=1):
         if state:
             global screenshot
-            self.screenshot = cv2.cvtColor(np.array(ImageGrab.grab(bbox=(self.SS_REGION[0][0]+27, self.SS_REGION[0][1]+58, self.SS_REGION[1][0]+170, self.SS_REGION[1][1]+192))), cv2.COLOR_RGB2BGR)
+            self.screenshot = cv2.cvtColor(np.array(ImageGrab.grab(bbox=(self.SS_REGION[0][0], self.SS_REGION[0][1], self.SS_REGION[1][0], self.SS_REGION[1][1]))), cv2.COLOR_RGB2BGR)
             cv2.imshow('screenshot', self.screenshot)
             
         elif not state:
@@ -94,7 +125,7 @@ class auto_screenshot:
     def view_sample_region(self, state=1):
         if state:
     
-            self.screenshot = cv2.cvtColor(np.array(ImageGrab.grab(bbox=(self.SAMPLE_REGION[0][0]+27, self.SAMPLE_REGION[0][1]+58, self.SAMPLE_REGION[1][0]+170, self.SAMPLE_REGION[1][1]+192))), cv2.COLOR_RGB2BGR)
+            self.screenshot = cv2.cvtColor(np.array(ImageGrab.grab(bbox=(self.SAMPLE_REGION[0][0], self.SAMPLE_REGION[0][1], self.SAMPLE_REGION[1][0], self.SAMPLE_REGION[1][1]))), cv2.COLOR_RGB2BGR)
             cv2.imshow('SAMPLE', self.screenshot)
 
         elif not state:
@@ -144,9 +175,15 @@ class GUI(auto_screenshot):
 
     def press_toggle_sample_preview(self):
         if self.toggle_sample_preview_state:
-            self.toggle_sample_preview_state = 0
-            autoss.view_sample_region(1)
-            
+            try:
+                self.toggle_sample_preview_state = 0
+                autoss.view_sample_region(1)
+            except:
+                self.toggle_sample_preview['text'] = "Set sample area first"
+                self.toggle_sample_preview['background'] = "red"
+                self.toggle_sample_preview['foreground'] = "white"
+                self.toggle_sample_preview.after(1000, lambda: self.toggle_sample_preview.config(text="Toggle Sample Preview", background="#F0F0F0", foreground="black"))
+                
         else:
             autoss.view_sample_region(0)
             self.toggle_sample_preview_state = 1
@@ -154,9 +191,14 @@ class GUI(auto_screenshot):
     
     def press_toggle_screenshot_preview(self):
         if self.toggle_screenshot_state:
-            
-            autoss.view_screenshot_region(1)
-            self.toggle_screenshot_state = 0
+            try:
+                autoss.view_screenshot_region(1)
+                self.toggle_screenshot_state = 0
+            except:
+                self.toggle_screenshot_preview['text'] = "Set screenshot area first"
+                self.toggle_screenshot_preview['background'] = "red"
+                self.toggle_screenshot_preview['foreground'] = "white"
+                self.toggle_screenshot_preview.after(1000, lambda: self.toggle_screenshot_preview.config(text="Toggle Screenshot Preview", background="#F0F0F0", foreground="black"))
             
         else:
             autoss.view_screenshot_region(0)
@@ -164,16 +206,18 @@ class GUI(auto_screenshot):
 
 
     def press_set_ss_region(self):
+        self.set_ss_area['text'] = "Setting screenshot region..."        
         autoss.set_ss_zone()
     
     
     def press_set_sample_region(self):
+        self.set_sample_area['text'] = "Setting sample region..."
         autoss.set_sample_zone()
     
 
     def create_elements(self):
         self.set_ss_area = tk.Button(self.window, text="Set screenshot region", width=self.WIDTH//2, command=self.press_set_ss_region)
-        self.set_sample_area = tk.Button(self.window, text="Set sample area", width=self.WIDTH//2, command=self.press_set_sample_region)
+        self.set_sample_area = tk.Button(self.window, text="Set sample region", width=self.WIDTH//2, command=self.press_set_sample_region)
         self.toggle_screenshot_preview = tk.Button(self.window, text="Toggle Screenshot Preview", width=self.WIDTH//2, command=self.press_toggle_screenshot_preview)
         self.toggle_sample_preview = tk.Button(self.window, text="Toggle Sample Preview", width=self.WIDTH//2, command=self.press_toggle_sample_preview)
         self.toggle_screenshot = tk.Button(self.window, text="Toggle AutoScreenshot", width=self.WIDTH//2, command=self.press_toggle_screenshot)
