@@ -15,11 +15,11 @@ class auto_screenshot:
     SS_REGION = []
     SAMPLE_REGION = []
     
-    
+
     def autoscreenshot(self):
         
         # Okay baby, pay attention. We are going to go on a coding adventure. Starting with the autoscreenshot program!!!!
-        # Reminders: this function is contained in an infinite loop until cancelled.
+        # Reminders: this function is contained in a recursion loop until cancelled.
         # This function will take 2 snapshots of sample region, x seconds apart.
         # After the second snapshot is taken, compare the first and the second snapshot to each other, spotting for difference between them.
         # If the difference goes past a N threshold, perform screenshot and paste into document.
@@ -32,7 +32,7 @@ class auto_screenshot:
         
         # INSERT CODE HERE >>>>>....
         self.subtracted = cv2.subtract(snapshot1, snapshot2)
-        cv2.imshow('window', self.subtracted)
+        #cv2.imshow('window', self.subtracted)
         if np.sum(self.subtracted) > 0:
             
             # copy screenshot to clipboard
@@ -47,7 +47,12 @@ class auto_screenshot:
             
             print("Screenshot!")    
             cv2.waitKey(500)
-
+            
+            if gui.auto_paste_activation:
+                pyautogui.hotkey('ctrl','v')
+                print("paste")
+            else:
+                print("no paste")
 
         # ....... <<< END INSERT CODE 
         
@@ -103,9 +108,7 @@ class auto_screenshot:
                 gui.set_sample_area['text'] = f"Corner2: {pyautogui.position()}"
                 gui.set_sample_area.after(1000, lambda: delay())
             
-
-
-                
+            
         mouse.on_click(lambda: manager_sample())            
     
     
@@ -137,11 +140,14 @@ class auto_screenshot:
 
 
 class GUI(auto_screenshot):
+
     WIDTH = 540
     HEIGHT = 300
     toggle_screenshot_state = 1
     toggle_screenshot_preview_state = 1
     toggle_sample_preview_state = 1
+    toggle_autopaste_state = 1
+    auto_paste_activation = True
     
     
     def  __init__(self) -> None:
@@ -150,7 +156,7 @@ class GUI(auto_screenshot):
         self.window.title("AutoScreenshot V2")
         self.window.geometry(f"{self.WIDTH}x{self.HEIGHT}")
         self.window.columnconfigure([0,1], weight=1)
-        self.window.rowconfigure([0,1,2,3,4], minsize=20, weight=1)
+        self.window.rowconfigure([0,1,2,3,4,5], minsize=20, weight=1)
         # Create GUI elements
         self.create_elements()
     
@@ -215,19 +221,32 @@ class GUI(auto_screenshot):
         autoss.set_sample_zone()
     
 
+    def press_auto_paste(self):
+        if not self.toggle_autopaste_state:
+            self.toggle_autopaste['text'] = "Toggle auto-paste: ON"
+            self.toggle_autopaste_state = 1
+            self.auto_paste_activation = True
+        else:
+            self.toggle_autopaste['text'] = "Toggle auto-paste: OFF"
+            self.auto_paste_activation = False
+            self.toggle_autopaste_state = 0
+            
+
+
     def create_elements(self):
         self.set_ss_area = tk.Button(self.window, text="Set screenshot region", width=self.WIDTH//2, command=self.press_set_ss_region)
         self.set_sample_area = tk.Button(self.window, text="Set sample region", width=self.WIDTH//2, command=self.press_set_sample_region)
         self.toggle_screenshot_preview = tk.Button(self.window, text="Toggle Screenshot Preview", width=self.WIDTH//2, command=self.press_toggle_screenshot_preview)
         self.toggle_sample_preview = tk.Button(self.window, text="Toggle Sample Preview", width=self.WIDTH//2, command=self.press_toggle_sample_preview)
         self.toggle_screenshot = tk.Button(self.window, text="Toggle AutoScreenshot", width=self.WIDTH//2, command=self.press_toggle_screenshot)
+        self.toggle_autopaste = tk.Button(self.window, text="Toggle auto-paste: ON", command=self.press_auto_paste)
 
         self.set_ss_area.grid                   (column=0, row=0, sticky='nsew', rowspan=3)
         self.set_sample_area.grid               (column=1, row=0, sticky='nsew')
         self.toggle_screenshot_preview.grid     (column=1, row=1, sticky='nsew')
         self.toggle_sample_preview.grid         (column=1, row=2, sticky='nsew')
         self.toggle_screenshot.grid             (column=0, row=3, sticky='nsew', rowspan=2, columnspan=2)
-
+        self.toggle_autopaste.grid              (column=0, row=5, sticky='nsew', columnspan=2)
 
 if __name__ == "__main__":
     gui = GUI()
