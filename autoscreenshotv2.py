@@ -9,7 +9,6 @@ import win32con
 import pyautogui
 
 
-
 class auto_screenshot:
 
     SS_REGION = []
@@ -138,11 +137,10 @@ class auto_screenshot:
                 print("already gone chief")            
 
 
-
 class GUI(auto_screenshot):
 
     WIDTH = 540
-    HEIGHT = 300
+    HEIGHT = 220
     toggle_screenshot_state = 1
     toggle_screenshot_preview_state = 1
     toggle_sample_preview_state = 1
@@ -232,7 +230,6 @@ class GUI(auto_screenshot):
             self.toggle_autopaste_state = 0
             
 
-
     def create_elements(self):
         self.set_ss_area = tk.Button(self.window, text="Set screenshot region", width=self.WIDTH//2, command=self.press_set_ss_region)
         self.set_sample_area = tk.Button(self.window, text="Set sample region", width=self.WIDTH//2, command=self.press_set_sample_region)
@@ -247,6 +244,7 @@ class GUI(auto_screenshot):
         self.toggle_sample_preview.grid         (column=1, row=2, sticky='nsew')
         self.toggle_screenshot.grid             (column=0, row=3, sticky='nsew', rowspan=2, columnspan=2)
         self.toggle_autopaste.grid              (column=0, row=5, sticky='nsew', columnspan=2)
+
 
 if __name__ == "__main__":
     gui = GUI()
