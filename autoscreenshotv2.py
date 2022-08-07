@@ -115,7 +115,7 @@ class auto_screenshot:
             
             def delay():
                 mouse.unhook_all()
-                gui.set_sample_area['text'] = "Set sample area"
+                gui.set_sample_area['text'] = "Set polling area"
                 print(self.SAMPLE_REGION)
             
             self.SAMPLE_REGION.append(pyautogui.position())
@@ -179,6 +179,7 @@ class GUI(auto_screenshot):
         self.window = tk.Tk()
         self.window.title("AutoScreenshot V2")
         self.window.geometry(f"{self.WIDTH}x{self.HEIGHT}")
+        
         self.window.columnconfigure([0,1], weight=1)
         self.window.rowconfigure([0,1,2,3,4,5], minsize=20, weight=1)
         # Create GUI elements
@@ -240,7 +241,7 @@ class GUI(auto_screenshot):
     
     
     def press_set_sample_region(self):
-        self.set_sample_area['text'] = "Setting sample region..."
+        self.set_sample_area['text'] = "Setting polling region..."
         autoss.set_sample_zone()
     
 
@@ -257,7 +258,7 @@ class GUI(auto_screenshot):
 
     def create_elements(self):
         self.set_ss_area = tk.Button(self.window, text="Set screenshot region", width=self.WIDTH//2, command=self.press_set_ss_region)
-        self.set_sample_area = tk.Button(self.window, text="Set sample region", width=self.WIDTH//2, command=self.press_set_sample_region)
+        self.set_sample_area = tk.Button(self.window, text="Set polling region", width=self.WIDTH//2, command=self.press_set_sample_region)
         self.toggle_screenshot_preview = tk.Button(self.window, text="Toggle Screenshot Preview", width=self.WIDTH//2, command=self.press_toggle_screenshot_preview)
         self.toggle_sample_preview = tk.Button(self.window, text="Toggle Sample Preview", width=self.WIDTH//2, command=self.press_toggle_sample_preview)
         self.toggle_screenshot = tk.Button(self.window, text="Toggle AutoScreenshot", width=self.WIDTH//2, command=self.press_toggle_screenshot)
@@ -274,4 +275,5 @@ class GUI(auto_screenshot):
 if __name__ == "__main__":
     gui = GUI()
     autoss = auto_screenshot()
+    gui.window.attributes('-topmost',True)
     gui.window.mainloop()
