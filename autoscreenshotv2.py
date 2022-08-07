@@ -13,7 +13,12 @@ class auto_screenshot:
 
     SS_REGION = []
     SAMPLE_REGION = []
-    
+    DIFFERENCES = [1]
+
+
+    def avg_img_difference(self):
+        return sum(self.DIFFERENCES)/len(self.DIFFERENCES)+50000
+
 
     def autoscreenshot(self):
         
@@ -38,9 +43,14 @@ class auto_screenshot:
             self.view_sample_region(self.subtracted, state=False)
 
         #cv2.imshow('window', self.subtracted)
+        self.DIFFERENCES.append(np.sum(self.subtracted)) 
         
-        if np.sum(self.subtracted) > (np.shape(self.subtracted)[0]*np.shape(self.subtracted)[1])*0.01+20000:
-            print(np.sum(self.subtracted), np.shape(self.subtracted), (np.shape(self.subtracted)[0]*np.shape(self.subtracted)[1])*0.01+15000,sep=', ')
+        if np.sum(self.subtracted) > self.avg_img_difference():
+            
+            if len(self.DIFFERENCES) > 100:
+                self.DIFFERENCES = [self.avg_img_difference()]
+            
+            print(np.sum(self.subtracted), np.shape(self.subtracted), self.avg_img_difference(), sep=', ')
             # copy screenshot to clipboard
             self.output = BytesIO()            
             self.take_screenshot = ImageGrab.grab(bbox=(self.SS_REGION[0][0], self.SS_REGION[0][1], self.SS_REGION[1][0], self.SS_REGION[1][1]))
@@ -61,10 +71,10 @@ class auto_screenshot:
                 print("no paste")
 
         # ....... <<< END INSERT CODE 
-        
         if end_auto:
             return
         gui.toggle_screenshot.after(100, self.autoscreenshot)
+        
         
     def set_ss_zone(self):
         self.CLICK_COUNT = 0
