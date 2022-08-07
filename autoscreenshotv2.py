@@ -35,12 +35,28 @@ class auto_screenshot:
         # After the second snapshot is taken, compare the first and the second snapshot to each other, spotting for difference between them.
         # If the difference goes past a N threshold, perform screenshot and paste into document.
         
+        
+        # The following lines stops the usage of the the autoscreenshot program if the screenshot region has not been setup yet.
+        if not self.SS_REGION:
+            gui.screenshot_region_is_setup = False
+        else:
+            gui.screenshot_region_is_setup = True
+        
+        if not self.SAMPLE_REGION:
+            gui.polling_region_is_setup = False
+        else:
+            gui.screenshot_region_is_setup = True
+            
+        if not gui.screenshot_region_is_setup and not gui.polling_region_is_setup:
+            return
+        
+    
         snapshot1 = cv2.cvtColor(np.array(ImageGrab.grab(bbox=(self.SAMPLE_REGION[0][0], self.SAMPLE_REGION[0][1], self.SAMPLE_REGION[1][0], self.SAMPLE_REGION[1][1]))), cv2.COLOR_BGR2GRAY)
         #print("snapshot1 is taken")
         cv2.waitKey(1000)
         snapshot2 = cv2.cvtColor(np.array(ImageGrab.grab(bbox=(self.SAMPLE_REGION[0][0], self.SAMPLE_REGION[0][1], self.SAMPLE_REGION[1][0], self.SAMPLE_REGION[1][1]))), cv2.COLOR_BGR2GRAY)
         #print("snapshot2 is taken")
-        
+
         # INSERT CODE HERE >>>>>....
         self.subtracted = cv2.subtract(snapshot1, snapshot2)
         
@@ -173,6 +189,9 @@ class GUI(auto_screenshot):
     toggle_autopaste_state = 1
     auto_paste_activation = True
     
+    polling_region_is_setup = False
+    screenshot_region_is_setup = False
+    
     
     def  __init__(self) -> None:
         # GUI Frame
@@ -191,10 +210,39 @@ class GUI(auto_screenshot):
         
         if self.toggle_screenshot_state:
             end_auto = 0
+            
+            if not autoss.SAMPLE_REGION:
+                
+                def return_delay():
+                    self.toggle_screenshot['text'] = "Toggle Autoscreenshot"
+                    self.toggle_screenshot['background'] = "#F0F0F0"
+                    self.toggle_screenshot['foreground'] = "black"
+                
+                self.toggle_screenshot['text'] = "Polling region is not setup!"
+                self.toggle_screenshot['background'] = "red"
+                self.toggle_screenshot['foreground'] = "white"
+                self.toggle_screenshot.after(1000, lambda: return_delay())
+                return
+            
+            if not autoss.SS_REGION:
+                
+                def return_delay():
+                    self.toggle_screenshot['text'] = "Toggle Autoscreenshot"
+                    self.toggle_screenshot['background'] = "#F0F0F0"
+                    self.toggle_screenshot['foreground'] = "black"
+                
+                self.toggle_screenshot['text'] = "Screenshot region is not setup!"
+                self.toggle_screenshot['background'] = "red"
+                self.toggle_screenshot['foreground'] = "white"
+                self.toggle_screenshot.after(1000, lambda: return_delay())
+                return
+            
             self.toggle_screenshot['text'] = "AutoScreenshot: ON"
             self.toggle_screenshot_state = 0
             global screenshot_loop
-            screenshot_loop = self.toggle_screenshot.after(500, lambda: autoss.autoscreenshot())
+            screenshot_loop = self.toggle_screenshot.after(10, lambda: autoss.autoscreenshot())
+                   
+                    
         else:
             end_auto = 1
             self.toggle_screenshot.after_cancel(screenshot_loop)
