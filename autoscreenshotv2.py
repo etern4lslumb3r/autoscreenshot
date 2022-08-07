@@ -14,10 +14,10 @@ class auto_screenshot:
     SS_REGION = []
     SAMPLE_REGION = []
     DIFFERENCES = [1]
-
+    ss_count = 0
 
     def avg_img_difference(self):
-        return sum(self.DIFFERENCES)/len(self.DIFFERENCES)+50000
+        return sum(self.DIFFERENCES)/len(self.DIFFERENCES)
 
 
     def autoscreenshot(self):
@@ -30,7 +30,7 @@ class auto_screenshot:
         
         snapshot1 = cv2.cvtColor(np.array(ImageGrab.grab(bbox=(self.SAMPLE_REGION[0][0], self.SAMPLE_REGION[0][1], self.SAMPLE_REGION[1][0], self.SAMPLE_REGION[1][1]))), cv2.COLOR_BGR2GRAY)
         #print("snapshot1 is taken")
-        cv2.waitKey(500)
+        cv2.waitKey(200)
         snapshot2 = cv2.cvtColor(np.array(ImageGrab.grab(bbox=(self.SAMPLE_REGION[0][0], self.SAMPLE_REGION[0][1], self.SAMPLE_REGION[1][0], self.SAMPLE_REGION[1][1]))), cv2.COLOR_BGR2GRAY)
         #print("snapshot2 is taken")
         
@@ -44,13 +44,14 @@ class auto_screenshot:
 
         #cv2.imshow('window', self.subtracted)
         self.DIFFERENCES.append(np.sum(self.subtracted)) 
-        
-        if np.sum(self.subtracted) > self.avg_img_difference():
+
+        if np.sum(self.subtracted) >= self.avg_img_difference():
             
+            print(np.sum(self.subtracted), self.avg_img_difference(), sep=', ')
+
             if len(self.DIFFERENCES) > 100:
                 self.DIFFERENCES = [self.avg_img_difference()]
             
-            print(np.sum(self.subtracted), np.shape(self.subtracted), self.avg_img_difference(), sep=', ')
             # copy screenshot to clipboard
             self.output = BytesIO()            
             self.take_screenshot = ImageGrab.grab(bbox=(self.SS_REGION[0][0], self.SS_REGION[0][1], self.SS_REGION[1][0], self.SS_REGION[1][1]))
@@ -61,14 +62,12 @@ class auto_screenshot:
             clip.SetClipboardData(win32con.CF_DIB, self.ss_data)
             clip.CloseClipboard()
             
-            print("Screenshot!")    
+            self.ss_count += 1
+            print(f"Screenshot! {self.ss_count}")    
             cv2.waitKey(500)
             
             if gui.auto_paste_activation:
                 pyautogui.hotkey('ctrl','v')
-                print("paste")
-            else:
-                print("no paste")
 
         # ....... <<< END INSERT CODE 
         if end_auto:
@@ -191,8 +190,7 @@ class GUI(auto_screenshot):
             screenshot_loop = self.toggle_screenshot.after(500, lambda: autoss.autoscreenshot())
         else:
             end_auto = 1
-            if screenshot_loop:
-                self.toggle_screenshot.after_cancel(screenshot_loop)
+            self.toggle_screenshot.after_cancel(screenshot_loop)
                 
             self.toggle_screenshot['text'] = "AutoScreenshot: OFF"
             self.toggle_screenshot_state = 1
