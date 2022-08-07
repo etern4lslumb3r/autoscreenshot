@@ -256,10 +256,12 @@ class GUI(auto_screenshot):
                 self.toggle_sample_preview_state = 0
                 autoss.view_sample_region(1)
             except:
-                self.toggle_sample_preview['text'] = "Set sample area first"
+                self.toggle_sample_preview['text'] = "Set polling region first"
                 self.toggle_sample_preview['background'] = "red"
                 self.toggle_sample_preview['foreground'] = "white"
-                self.toggle_sample_preview.after(1000, lambda: self.toggle_sample_preview.config(text="Toggle Sample Preview", background="#F0F0F0", foreground="black"))
+                self.toggle_sample_preview.after(1000, lambda: self.toggle_sample_preview.config(text="Toggle Polling Region Preview", background="#F0F0F0", foreground="black"))
+                self.toggle_sample_preview_state = 1
+
                 
         else:
             autoss.view_sample_region(0)
@@ -307,7 +309,7 @@ class GUI(auto_screenshot):
         self.set_ss_area = tk.Button(self.window, text="Set screenshot region", width=self.WIDTH//2, command=self.press_set_ss_region)
         self.set_sample_area = tk.Button(self.window, text="Set polling region", width=self.WIDTH//2, command=self.press_set_sample_region)
         self.toggle_screenshot_preview = tk.Button(self.window, text="Toggle Screenshot Preview", width=self.WIDTH//2, command=self.press_toggle_screenshot_preview)
-        self.toggle_sample_preview = tk.Button(self.window, text="Toggle Sample Preview", width=self.WIDTH//2, command=self.press_toggle_sample_preview)
+        self.toggle_sample_preview = tk.Button(self.window, text="Toggle Polling Region Preview", width=self.WIDTH//2, command=self.press_toggle_sample_preview)
         self.toggle_screenshot = tk.Button(self.window, text="Toggle AutoScreenshot", width=self.WIDTH//2, command=self.press_toggle_screenshot)
         self.toggle_autopaste = tk.Button(self.window, text="Toggle auto-paste: ON", command=self.press_auto_paste)
 
