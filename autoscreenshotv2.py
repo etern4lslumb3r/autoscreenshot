@@ -7,6 +7,7 @@ from io import BytesIO
 import win32clipboard as clip
 import win32con
 import pyautogui
+from skimage.metrics import structural_similarity as ssim
 
 
 class auto_screenshot:
@@ -20,6 +21,12 @@ class auto_screenshot:
         return sum(self.DIFFERENCES)/len(self.DIFFERENCES)
 
 
+    def mse(self, imageA, imageB):
+        err = np.sum((imageA.astype("float") - imageB.astype("float")) ** 2)
+        err /= float(imageA.shape[0] * imageA.shape[1])        
+        return err
+    
+
     def autoscreenshot(self):
         
         # Okay baby, pay attention. We are going to go on a coding adventure. Starting with the autoscreenshot program!!!!
@@ -30,7 +37,7 @@ class auto_screenshot:
         
         snapshot1 = cv2.cvtColor(np.array(ImageGrab.grab(bbox=(self.SAMPLE_REGION[0][0], self.SAMPLE_REGION[0][1], self.SAMPLE_REGION[1][0], self.SAMPLE_REGION[1][1]))), cv2.COLOR_BGR2GRAY)
         #print("snapshot1 is taken")
-        cv2.waitKey(200)
+        cv2.waitKey(1000)
         snapshot2 = cv2.cvtColor(np.array(ImageGrab.grab(bbox=(self.SAMPLE_REGION[0][0], self.SAMPLE_REGION[0][1], self.SAMPLE_REGION[1][0], self.SAMPLE_REGION[1][1]))), cv2.COLOR_BGR2GRAY)
         #print("snapshot2 is taken")
         
@@ -43,14 +50,14 @@ class auto_screenshot:
             self.view_sample_region(self.subtracted, state=False)
 
         #cv2.imshow('window', self.subtracted)
-        self.DIFFERENCES.append(np.sum(self.subtracted)) 
+        #self.DIFFERENCES.append(np.sum(self.subtracted)) 
+        print(ssim(snapshot1, snapshot2, full=True)[0])
 
-        if np.sum(self.subtracted) >= self.avg_img_difference():
-            
-            print(np.sum(self.subtracted), self.avg_img_difference(), sep=', ')
+        if ssim(snapshot1, snapshot2, full=True)[0] <= 0.97 and self.mse(snapshot1, snapshot2) > 0:
+            #print(np.sum(self.subtracted), self.avg_img_difference(), sep=', ')
 
-            if len(self.DIFFERENCES) > 100:
-                self.DIFFERENCES = [self.avg_img_difference()]
+            #if len(self.DIFFERENCES) > 100:
+                #self.DIFFERENCES = [self.avg_img_difference()]
             
             # copy screenshot to clipboard
             self.output = BytesIO()            
@@ -71,7 +78,7 @@ class auto_screenshot:
         # ....... <<< END INSERT CODE 
         if end_auto:
             return
-        gui.toggle_screenshot.after(100, self.autoscreenshot)
+        gui.toggle_screenshot.after(1, self.autoscreenshot)
         
         
     def set_ss_zone(self):
