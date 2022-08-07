@@ -29,7 +29,6 @@ class auto_screenshot:
 
     def autoscreenshot(self):
         
-        # Okay baby, pay attention. We are going to go on a coding adventure. Starting with the autoscreenshot program!!!!
         # Reminders: this function is contained in a recursion loop until cancelled.
         # This function will take 2 snapshots of sample region, x seconds apart.
         # After the second snapshot is taken, compare the first and the second snapshot to each other, spotting for difference between them.
