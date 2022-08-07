@@ -64,7 +64,6 @@ class auto_screenshot:
             
             self.ss_count += 1
             print(f"Screenshot! {self.ss_count}")    
-            cv2.waitKey(500)
             
             if gui.auto_paste_activation:
                 pyautogui.hotkey('ctrl','v')
