@@ -53,7 +53,7 @@ class auto_screenshot:
     
         snapshot1 = cv2.cvtColor(np.array(ImageGrab.grab(bbox=(self.SAMPLE_REGION[0][0], self.SAMPLE_REGION[0][1], self.SAMPLE_REGION[1][0], self.SAMPLE_REGION[1][1]))), cv2.COLOR_BGR2GRAY)
         #print("snapshot1 is taken")
-        cv2.waitKey(1000)
+        cv2.waitKey(500)
         snapshot2 = cv2.cvtColor(np.array(ImageGrab.grab(bbox=(self.SAMPLE_REGION[0][0], self.SAMPLE_REGION[0][1], self.SAMPLE_REGION[1][0], self.SAMPLE_REGION[1][1]))), cv2.COLOR_BGR2GRAY)
         #print("snapshot2 is taken")
 
@@ -127,7 +127,6 @@ class auto_screenshot:
         self.CLICK_COUNT = 0
         self.SAMPLE_REGION = []
         def manager_sample():
-            
             
             def delay():
                 mouse.unhook_all()
@@ -284,7 +283,7 @@ class GUI(auto_screenshot):
 
 
     def press_set_ss_region(self):
-        self.set_ss_area['text'] = "Setting screenshot region..."        
+        self.set_ss_area['text'] = "Setting screenshot region..."   
         autoss.set_ss_zone()
     
     
