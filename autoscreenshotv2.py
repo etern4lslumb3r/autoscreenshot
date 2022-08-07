@@ -31,9 +31,16 @@ class auto_screenshot:
         
         # INSERT CODE HERE >>>>>....
         self.subtracted = cv2.subtract(snapshot1, snapshot2)
+        
+        if gui.toggle_sample_preview_state:
+            self.view_sample_region(self.subtracted, state=True, update=True)
+        else:
+            self.view_sample_region(self.subtracted, state=False)
+
         #cv2.imshow('window', self.subtracted)
-        if np.sum(self.subtracted) > 0:
-            
+        
+        if np.sum(self.subtracted) > (np.shape(self.subtracted)[0]*np.shape(self.subtracted)[1])*0.01+20000:
+            print(np.sum(self.subtracted), np.shape(self.subtracted), (np.shape(self.subtracted)[0]*np.shape(self.subtracted)[1])*0.01+15000,sep=', ')
             # copy screenshot to clipboard
             self.output = BytesIO()            
             self.take_screenshot = ImageGrab.grab(bbox=(self.SS_REGION[0][0], self.SS_REGION[0][1], self.SS_REGION[1][0], self.SS_REGION[1][1]))
@@ -121,20 +128,24 @@ class auto_screenshot:
             try:
                 cv2.destroyWindow('screenshot')
             except:
-                print("already gone chief")
+                pass
 
 
-    def view_sample_region(self, state=1):
+    def view_sample_region(self, sample, state=bool, update=False):
         if state:
-    
-            self.screenshot = cv2.cvtColor(np.array(ImageGrab.grab(bbox=(self.SAMPLE_REGION[0][0], self.SAMPLE_REGION[0][1], self.SAMPLE_REGION[1][0], self.SAMPLE_REGION[1][1]))), cv2.COLOR_RGB2BGR)
-            cv2.imshow('SAMPLE', self.screenshot)
+            
+            if update:
+                self.screenshot = sample
+                cv2.imshow('SAMPLE', self.screenshot)
+            else:
+                self.screenshot = cv2.cvtColor(np.array(ImageGrab.grab(bbox=(self.SAMPLE_REGION[0][0], self.SAMPLE_REGION[0][1], self.SAMPLE_REGION[1][0], self.SAMPLE_REGION[1][1]))), cv2.COLOR_BGR2GRAY)
+                cv2.imshow('SAMPLE', self.screenshot)
 
         elif not state:
             try:
                 cv2.destroyWindow('SAMPLE')
             except:
-                print("already gone chief")            
+                pass            
 
 
 class GUI(auto_screenshot):
