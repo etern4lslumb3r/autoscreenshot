@@ -1,9 +1,9 @@
 # AutoScreenshot
 
-Program for those who intend to attend online classes but unfortunate circumstances have rendered such impossible. (or too lazy to listen).
+Program for those who wish to save screenshots of videos such as online lecture powerpoints without the need for the tedious screenshot process. 
 
 
-This program will automatically take screenshots, save it to your clipboard, and paste it onto a online document of your choosing, whether that be Google Docs, Microsoft Word,
+This program will automatically take screenshots based on frame changes, save it to your clipboard, and paste it onto a online document of your choosing, whether that be Google Docs, Microsoft Word,
 or any other platforms which support the ability to paste in images.
 
 # How it works
