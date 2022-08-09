@@ -10,12 +10,14 @@ import pyautogui
 from skimage.metrics import structural_similarity as ssim
 
 
-class auto_screenshot:
+class auto_screenshot():
 
     SS_REGION = []
     SAMPLE_REGION = []
     DIFFERENCES = [1]
     SESSION_SS_CACHE = set()
+    SSIM_THRESHOLD = 0.8
+    
     
     ss_count = 0
 
@@ -73,8 +75,8 @@ class auto_screenshot:
         self.current_frame_greyscale = cv2.cvtColor(np.array(ImageGrab.grab(bbox=(self.SS_REGION[0][0], self.SS_REGION[0][1], self.SS_REGION[1][0], self.SS_REGION[1][1]))), cv2.COLOR_RGB2GRAY)
 
         self.ssim_score = ssim(snapshot1, snapshot2, full=True)[0]
-
-        if self.ssim_score <= 0.98 and self.mse(snapshot1, snapshot2) > 0 and self.ssim_score not in self.SESSION_SS_CACHE:
+                                    #self.mse(snapshot1, snapshot2) > 0 and 
+        if self.ssim_score <= self.SSIM_THRESHOLD and self.ssim_score not in self.SESSION_SS_CACHE:
             #print(np.sum(self.subtracted), self.avg_img_difference(), sep=', ')
 
             #if len(self.DIFFERENCES) > 100:
@@ -187,7 +189,7 @@ class auto_screenshot:
 class GUI(auto_screenshot):
 
     WIDTH = 540
-    HEIGHT = 220
+    HEIGHT = 340
     toggle_screenshot_state = 1
     toggle_screenshot_preview_state = 1
     toggle_sample_preview_state = 1
@@ -215,6 +217,8 @@ class GUI(auto_screenshot):
         
         if self.toggle_screenshot_state:
             end_auto = 0
+            autoss.SSIM_THRESHOLD = self.get_inverse_converted_detection_thresh()
+            print(autoss.SSIM_THRESHOLD)
             
             if not autoss.SAMPLE_REGION:
                 
@@ -310,7 +314,11 @@ class GUI(auto_screenshot):
             self.auto_paste_activation = False
             self.toggle_autopaste_state = 0
             
-
+            
+    def get_inverse_converted_detection_thresh(self):
+        return (100 - self.detect_threshold_slider.get()) / 100 if self.detect_threshold_slider.get() != 100 else 0
+        
+    
     def create_elements(self):
         self.set_ss_area = tk.Button(self.window, text="Set screenshot region", width=self.WIDTH//2, command=self.press_set_ss_region)
         self.set_sample_area = tk.Button(self.window, text="Set polling region", width=self.WIDTH//2, command=self.press_set_sample_region)
@@ -318,6 +326,8 @@ class GUI(auto_screenshot):
         self.toggle_sample_preview = tk.Button(self.window, text="Toggle Polling Region Preview", width=self.WIDTH//2, command=self.press_toggle_sample_preview)
         self.toggle_screenshot = tk.Button(self.window, text="Toggle AutoScreenshot", width=self.WIDTH//2, command=self.press_toggle_screenshot)
         self.toggle_autopaste = tk.Button(self.window, text="Toggle auto-paste: ON", command=self.press_auto_paste)
+        self.detect_threshold_slider = tk.Scale(self.window, from_=0, to=100, orient=tk.HORIZONTAL, label="Change Detection Threshold: (higher = less sensitive to frame changes)")
+        self.detect_threshold_slider.set(20)
 
         self.set_ss_area.grid                   (column=0, row=0, sticky='nsew', rowspan=3)
         self.set_sample_area.grid               (column=1, row=0, sticky='nsew')
@@ -325,8 +335,9 @@ class GUI(auto_screenshot):
         self.toggle_sample_preview.grid         (column=1, row=2, sticky='nsew')
         self.toggle_screenshot.grid             (column=0, row=3, sticky='nsew', rowspan=2, columnspan=2)
         self.toggle_autopaste.grid              (column=0, row=5, sticky='nsew', columnspan=2)
-
-
+        self.detect_threshold_slider.grid       (column=0, row=6, sticky='nswe', columnspan=2, rowspan=2)
+        
+        
 if __name__ == "__main__":
     gui = GUI()
     autoss = auto_screenshot()
