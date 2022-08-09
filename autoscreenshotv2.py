@@ -53,7 +53,7 @@ class auto_screenshot:
         
         snapshot1 = cv2.cvtColor(np.array(ImageGrab.grab(bbox=(self.SAMPLE_REGION[0][0], self.SAMPLE_REGION[0][1], self.SAMPLE_REGION[1][0], self.SAMPLE_REGION[1][1]))), cv2.COLOR_BGR2GRAY)
         #print("snapshot1 is taken")
-        cv2.waitKey(500)
+        cv2.waitKey(400)
         snapshot2 = cv2.cvtColor(np.array(ImageGrab.grab(bbox=(self.SAMPLE_REGION[0][0], self.SAMPLE_REGION[0][1], self.SAMPLE_REGION[1][0], self.SAMPLE_REGION[1][1]))), cv2.COLOR_BGR2GRAY)
         #print("snapshot2 is taken")
 
@@ -100,7 +100,7 @@ class auto_screenshot:
         # ....... <<< END INSERT CODE 
         if end_auto:
             return
-        gui.toggle_screenshot.after(100, self.autoscreenshot)
+        gui.toggle_screenshot.after(0, self.autoscreenshot)
         
         
     def set_ss_zone(self):
