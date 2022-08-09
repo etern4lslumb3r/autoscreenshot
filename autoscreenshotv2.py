@@ -1,6 +1,6 @@
 import tkinter as tk
 import cv2
-from PIL import ImageGrab
+from PIL import ImageGrab, Image
 import mouse
 import numpy as np
 from io import BytesIO
@@ -17,6 +17,7 @@ class auto_screenshot():
     SESSION_SS_CACHE = set()
     SSIM_THRESHOLD = 0.8
     
+    IMAGE_UPSCALE_MAX_X = 633
     # debugging variable
     ss_count = 0
     
@@ -87,16 +88,28 @@ class auto_screenshot():
         self.current_frame = ImageGrab.grab(bbox=(self.SS_REGION[0][0], self.SS_REGION[0][1], self.SS_REGION[1][0], self.SS_REGION[1][1]))
         self.current_frame_bytes = ImageGrab.grab(bbox=(self.SS_REGION[0][0], self.SS_REGION[0][1], self.SS_REGION[1][0], self.SS_REGION[1][1])).tobytes()
 
+        # Get aspect ratio of screenshot, Enlarge it to max of x = 700
+        self.current_dimension = np.array(self.current_frame).shape
+        self.dim_x = self.current_dimension[1]
+        self.dim_y = self.current_dimension[0]
+        self.current_frame_aspect_ratio = round(self.dim_x // self.dim_y, 2)
+        self.new_dim_x = self.IMAGE_UPSCALE_MAX_X
+        self.new_dim_y = int(self.IMAGE_UPSCALE_MAX_X // self.current_frame_aspect_ratio)
+        self.resized_dim = (self.new_dim_x, self.new_dim_y)
+        self.upscaled_frame = Image.fromarray(cv2.resize(np.array(self.current_frame), self.resized_dim, interpolation=cv2.INTER_AREA))
+        self.current_frame = self.upscaled_frame
+
         self.ssim_score = ssim(snapshot1, snapshot2, full=True)[0]
                                     #self.mse(snapshot1, snapshot2) > 0 and 
         if self.ssim_score <= self.SSIM_THRESHOLD and self.current_frame_bytes not in self.SESSION_SS_CACHE:
             self.screenshot_action()
 
+
         # ....... <<< END INSERT CODE 
         if end_auto:
             return
-        gui.toggle_screenshot.after(0, self.autoscreenshot)
         
+        gui.window.after(0, self.autoscreenshot)       
         
     def set_ss_zone(self):
         self.CLICK_COUNT = 0
@@ -143,7 +156,6 @@ class auto_screenshot():
             elif self.CLICK_COUNT == 2:
                 gui.set_sample_area['text'] = f"Corner2: {pyautogui.position()}"
                 gui.set_sample_area.after(1000, lambda: delay())
-            
             
         mouse.on_click(lambda: manager_sample())            
     
@@ -238,6 +250,7 @@ class GUI(auto_screenshot):
                 return
             
             self.toggle_screenshot['text'] = "AutoScreenshot: ON"
+            
             self.toggle_screenshot_state = 0
             global screenshot_loop
             screenshot_loop = self.toggle_screenshot.after(10, lambda: autoss.autoscreenshot())
