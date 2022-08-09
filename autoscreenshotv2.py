@@ -15,7 +15,7 @@ class auto_screenshot:
     SS_REGION = []
     SAMPLE_REGION = []
     DIFFERENCES = [1]
-    SESSION_SS_CACHE = []
+    SESSION_SS_CACHE = set()
     
     ss_count = 0
 
@@ -53,7 +53,7 @@ class auto_screenshot:
         
         snapshot1 = cv2.cvtColor(np.array(ImageGrab.grab(bbox=(self.SAMPLE_REGION[0][0], self.SAMPLE_REGION[0][1], self.SAMPLE_REGION[1][0], self.SAMPLE_REGION[1][1]))), cv2.COLOR_BGR2GRAY)
         #print("snapshot1 is taken")
-        cv2.waitKey(400)
+        cv2.waitKey(750)
         snapshot2 = cv2.cvtColor(np.array(ImageGrab.grab(bbox=(self.SAMPLE_REGION[0][0], self.SAMPLE_REGION[0][1], self.SAMPLE_REGION[1][0], self.SAMPLE_REGION[1][1]))), cv2.COLOR_BGR2GRAY)
         #print("snapshot2 is taken")
 
@@ -70,9 +70,11 @@ class auto_screenshot:
         print(ssim(snapshot1, snapshot2, full=True)[0])
         
         self.current_frame = ImageGrab.grab(bbox=(self.SS_REGION[0][0], self.SS_REGION[0][1], self.SS_REGION[1][0], self.SS_REGION[1][1]))
+        self.current_frame_greyscale = cv2.cvtColor(np.array(ImageGrab.grab(bbox=(self.SS_REGION[0][0], self.SS_REGION[0][1], self.SS_REGION[1][0], self.SS_REGION[1][1]))), cv2.COLOR_RGB2GRAY)
+
         self.ssim_score = ssim(snapshot1, snapshot2, full=True)[0]
 
-        if self.ssim_score <= 0.98 and self.mse(snapshot1, snapshot2) > 0 and self.current_frame not in self.SESSION_SS_CACHE:
+        if self.ssim_score <= 0.98 and self.mse(snapshot1, snapshot2) > 0 and self.ssim_score not in self.SESSION_SS_CACHE:
             #print(np.sum(self.subtracted), self.avg_img_difference(), sep=', ')
 
             #if len(self.DIFFERENCES) > 100:
@@ -81,8 +83,7 @@ class auto_screenshot:
             # copy screenshot to clipboard
             self.output = BytesIO()            
             self.take_screenshot = self.current_frame
-            self.SESSION_SS_CACHE.append(self.take_screenshot)
-            
+            self.SESSION_SS_CACHE.add(self.ssim_score)
             self.take_screenshot.convert('RGB').save(self.output, 'BMP')
             self.ss_data = self.output.getvalue()[14:]
             clip.OpenClipboard()
