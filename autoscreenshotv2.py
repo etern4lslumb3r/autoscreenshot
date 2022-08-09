@@ -99,7 +99,6 @@ class auto_screenshot():
         self.upscaled_frame = Image.fromarray(cv2.resize(np.array(self.current_frame), self.resized_dim, interpolation=cv2.INTER_AREA))
         self.current_frame = self.upscaled_frame
 
-
         self.ssim_score = ssim(snapshot1, snapshot2, full=True)[0]
                                     #self.mse(snapshot1, snapshot2) > 0 and 
         if self.ssim_score <= self.SSIM_THRESHOLD and self.current_frame_bytes not in self.SESSION_SS_CACHE:
@@ -157,7 +156,6 @@ class auto_screenshot():
             elif self.CLICK_COUNT == 2:
                 gui.set_sample_area['text'] = f"Corner2: {pyautogui.position()}"
                 gui.set_sample_area.after(1000, lambda: delay())
-            
             
         mouse.on_click(lambda: manager_sample())            
     
