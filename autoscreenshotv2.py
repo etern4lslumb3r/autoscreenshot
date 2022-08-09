@@ -8,6 +8,67 @@ import win32clipboard as clip
 import win32con
 import pyautogui
 from skimage.metrics import structural_similarity as ssim
+import threading
+import queue
+
+
+class AutoScreenshotThread(threading.Thread):
+    def __init__(self, queue):
+        super().__init__(daemon=True)
+        self.queue = queue
+        
+    def run(self):
+        while not end_auto:
+            if not autoss.SS_REGION:
+                gui.screenshot_region_is_setup = False
+            else:
+                gui.screenshot_region_is_setup = True
+            
+            if not autoss.SAMPLE_REGION:
+                gui.polling_region_is_setup = False
+            else:
+                gui.screenshot_region_is_setup = True
+                
+            if not gui.screenshot_region_is_setup and not gui.polling_region_is_setup:
+                return
+            
+            self.snapshot1 = cv2.cvtColor(np.array(ImageGrab.grab(bbox=(autoss.SAMPLE_REGION[0][0], autoss.SAMPLE_REGION[0][1], autoss.SAMPLE_REGION[1][0], autoss.SAMPLE_REGION[1][1]))), cv2.COLOR_BGR2GRAY)
+            #print("snapshot1 is taken")
+            cv2.waitKey(1000)
+            self.snapshot2 = cv2.cvtColor(np.array(ImageGrab.grab(bbox=(autoss.SAMPLE_REGION[0][0], autoss.SAMPLE_REGION[0][1], autoss.SAMPLE_REGION[1][0], autoss.SAMPLE_REGION[1][1]))), cv2.COLOR_BGR2GRAY)
+            #print("snapshot2 is taken")
+
+            # INSERT CODE HERE >>>>>....
+            
+            
+            #self.subtracted = cv2.subtract(self.snapshot1, self.snapshot2)
+            
+            #PUTTING IN A THREAD BROKE POLLING REGION PREVIEW
+            
+ #           if gui.toggle_sample_preview_state:
+ #               autoss.view_sample_region(self.subtracted, state=True, update=True)
+   #         else:
+  #             autoss.view_sample_region(self.subtracted, state=False)
+
+            print(ssim(self.snapshot1, self.snapshot2, full=True)[0])
+            
+            self.current_frame = ImageGrab.grab(bbox=(autoss.SS_REGION[0][0], autoss.SS_REGION[0][1], autoss.SS_REGION[1][0], autoss.SS_REGION[1][1]))
+            self.current_frame_bytes = self.current_frame.tobytes()
+            #autosst aspect ratio of screenshot, Enlarge it to max of x = 700
+            self.current_dimension = np.array(self.current_frame).shape
+            self.dim_x = self.current_dimension[1]
+            self.dim_y = self.current_dimension[0]
+            self.current_frame_aspect_ratio = round(self.dim_x // self.dim_y, 2)
+            self.new_dim_x = autoss.IMAGE_UPSCALE_MAX_X
+            self.new_dim_y = int(self.new_dim_x // self.current_frame_aspect_ratio)
+            self.resized_dim = (self.new_dim_x, self.new_dim_y)
+            self.upscaled_frame = Image.fromarray(cv2.resize(np.array(self.current_frame), self.resized_dim, interpolation=cv2.INTER_AREA))
+            self.current_frame = self.upscaled_frame
+
+            self.ssim_score = ssim(self.snapshot1, self.snapshot2, full=True)[0]
+                                        #self.mse(snapshot1, snapshot2) > 0 and 
+            if self.ssim_score <= autoss.SSIM_THRESHOLD and self.current_frame_bytes not in autoss.SESSION_SS_CACHE:
+                autoss.screenshot_action(self.current_frame)
 
 
 class auto_screenshot():
@@ -22,7 +83,7 @@ class auto_screenshot():
     ss_count = 0
     
     
-    def screenshot_action(self):
+    def screenshot_action(self, screenshot):
         #print(np.sum(self.subtracted), self.avg_img_difference(), sep=', ')
 
         #if len(self.DIFFERENCES) > 100:
@@ -30,8 +91,8 @@ class auto_screenshot():
         
         # copy screenshot to clipboard
         self.output = BytesIO()            
-        self.take_screenshot = self.current_frame
-        self.SESSION_SS_CACHE.add(self.current_frame_bytes)
+        self.take_screenshot = screenshot
+        self.SESSION_SS_CACHE.add(screenshot.tobytes())
         self.take_screenshot.convert('RGB').save(self.output, 'BMP')
         self.ss_data = self.output.getvalue()[14:]
         clip.OpenClipboard()
@@ -49,68 +110,18 @@ class auto_screenshot():
     
     def autoscreenshot(self):
         
-        # Reminders: this function is contained in a recursion loop until cancelled.
-        # This function will take 2 snapshots of sample region, x seconds apart.
-        # After the second snapshot is taken, compare the first and the second snapshot to each other, spotting for difference between them.
-        # If the difference goes past a N threshold, perform screenshot and paste into document.
+        self.queue = queue.Queue()
+        AutoScreenshotThread(self.queue).start()
+        gui.window.after(100, self.process_queue)
+
         
-        
-        # The following lines stops the usage of the the autoscreenshot program if the screenshot region has not been setup yet.
-        if not self.SS_REGION:
-            gui.screenshot_region_is_setup = False
-        else:
-            gui.screenshot_region_is_setup = True
-        
-        if not self.SAMPLE_REGION:
-            gui.polling_region_is_setup = False
-        else:
-            gui.screenshot_region_is_setup = True
+    def process_queue(self):
+        try:
+            msg = self.queue.get_nowait()
+        except queue.Empty:
+            gui.window.after(100, self.process_queue)
             
-        if not gui.screenshot_region_is_setup and not gui.polling_region_is_setup:
-            return
-        
-        snapshot1 = cv2.cvtColor(np.array(ImageGrab.grab(bbox=(self.SAMPLE_REGION[0][0], self.SAMPLE_REGION[0][1], self.SAMPLE_REGION[1][0], self.SAMPLE_REGION[1][1]))), cv2.COLOR_BGR2GRAY)
-        #print("snapshot1 is taken")
-        cv2.waitKey(750)
-        snapshot2 = cv2.cvtColor(np.array(ImageGrab.grab(bbox=(self.SAMPLE_REGION[0][0], self.SAMPLE_REGION[0][1], self.SAMPLE_REGION[1][0], self.SAMPLE_REGION[1][1]))), cv2.COLOR_BGR2GRAY)
-        #print("snapshot2 is taken")
-
-        # INSERT CODE HERE >>>>>....
-        self.subtracted = cv2.subtract(snapshot1, snapshot2)
-        
-        if gui.toggle_sample_preview_state:
-            self.view_sample_region(self.subtracted, state=True, update=True)
-        else:
-            self.view_sample_region(self.subtracted, state=False)
-
-        print(ssim(snapshot1, snapshot2, full=True)[0])
-        
-        self.current_frame = ImageGrab.grab(bbox=(self.SS_REGION[0][0], self.SS_REGION[0][1], self.SS_REGION[1][0], self.SS_REGION[1][1]))
-        self.current_frame_bytes = ImageGrab.grab(bbox=(self.SS_REGION[0][0], self.SS_REGION[0][1], self.SS_REGION[1][0], self.SS_REGION[1][1])).tobytes()
-
-        # Get aspect ratio of screenshot, Enlarge it to max of x = 700
-        self.current_dimension = np.array(self.current_frame).shape
-        self.dim_x = self.current_dimension[1]
-        self.dim_y = self.current_dimension[0]
-        self.current_frame_aspect_ratio = round(self.dim_x // self.dim_y, 2)
-        self.new_dim_x = self.IMAGE_UPSCALE_MAX_X
-        self.new_dim_y = int(self.IMAGE_UPSCALE_MAX_X // self.current_frame_aspect_ratio)
-        self.resized_dim = (self.new_dim_x, self.new_dim_y)
-        self.upscaled_frame = Image.fromarray(cv2.resize(np.array(self.current_frame), self.resized_dim, interpolation=cv2.INTER_AREA))
-        self.current_frame = self.upscaled_frame
-
-        self.ssim_score = ssim(snapshot1, snapshot2, full=True)[0]
-                                    #self.mse(snapshot1, snapshot2) > 0 and 
-        if self.ssim_score <= self.SSIM_THRESHOLD and self.current_frame_bytes not in self.SESSION_SS_CACHE:
-            self.screenshot_action()
-
-
-        # ....... <<< END INSERT CODE 
-        if end_auto:
-            return
-        
-        gui.window.after(0, self.autoscreenshot)       
-        
+    
     def set_ss_zone(self):
         self.CLICK_COUNT = 0
         self.SS_REGION = []
@@ -327,7 +338,7 @@ class GUI(auto_screenshot):
         self.set_ss_area = tk.Button(self.window, text="Set screenshot region", width=self.WIDTH//2, command=self.press_set_ss_region)
         self.set_sample_area = tk.Button(self.window, text="Set polling region", width=self.WIDTH//2, command=self.press_set_sample_region)
         self.toggle_screenshot_preview = tk.Button(self.window, text="Toggle Screenshot Preview", width=self.WIDTH//2, command=self.press_toggle_screenshot_preview)
-        self.toggle_sample_preview = tk.Button(self.window, text="Toggle Polling Region Preview", width=self.WIDTH//2, command=self.press_toggle_sample_preview)
+        self.toggle_sample_preview = tk.Button(self.window, text="Toggle Polling Region Preview", width=self.WIDTH//2) #command=self.press_toggle_sample_preview
         self.toggle_screenshot = tk.Button(self.window, text="Toggle AutoScreenshot", width=self.WIDTH//2, command=self.press_toggle_screenshot)
         self.toggle_autopaste = tk.Button(self.window, text="Toggle auto-paste: ON", command=self.press_auto_paste)
         self.detect_threshold_slider = tk.Scale(self.window, from_=0, to=100, orient=tk.HORIZONTAL, label="Detection Threshold: (higher = less sensitive to frame changes)")
