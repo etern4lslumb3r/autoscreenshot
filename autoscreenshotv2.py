@@ -72,11 +72,11 @@ class auto_screenshot():
         print(ssim(snapshot1, snapshot2, full=True)[0])
         
         self.current_frame = ImageGrab.grab(bbox=(self.SS_REGION[0][0], self.SS_REGION[0][1], self.SS_REGION[1][0], self.SS_REGION[1][1]))
-        self.current_frame_greyscale = cv2.cvtColor(np.array(ImageGrab.grab(bbox=(self.SS_REGION[0][0], self.SS_REGION[0][1], self.SS_REGION[1][0], self.SS_REGION[1][1]))), cv2.COLOR_RGB2GRAY)
+        self.current_frame_bytes = ImageGrab.grab(bbox=(self.SS_REGION[0][0], self.SS_REGION[0][1], self.SS_REGION[1][0], self.SS_REGION[1][1])).tobytes()
 
         self.ssim_score = ssim(snapshot1, snapshot2, full=True)[0]
                                     #self.mse(snapshot1, snapshot2) > 0 and 
-        if self.ssim_score <= self.SSIM_THRESHOLD and self.ssim_score not in self.SESSION_SS_CACHE:
+        if self.ssim_score <= self.SSIM_THRESHOLD and self.current_frame_bytes not in self.SESSION_SS_CACHE:
             #print(np.sum(self.subtracted), self.avg_img_difference(), sep=', ')
 
             #if len(self.DIFFERENCES) > 100:
@@ -85,7 +85,7 @@ class auto_screenshot():
             # copy screenshot to clipboard
             self.output = BytesIO()            
             self.take_screenshot = self.current_frame
-            self.SESSION_SS_CACHE.add(self.ssim_score)
+            self.SESSION_SS_CACHE.add(self.current_frame_bytes)
             self.take_screenshot.convert('RGB').save(self.output, 'BMP')
             self.ss_data = self.output.getvalue()[14:]
             clip.OpenClipboard()
@@ -326,7 +326,7 @@ class GUI(auto_screenshot):
         self.toggle_sample_preview = tk.Button(self.window, text="Toggle Polling Region Preview", width=self.WIDTH//2, command=self.press_toggle_sample_preview)
         self.toggle_screenshot = tk.Button(self.window, text="Toggle AutoScreenshot", width=self.WIDTH//2, command=self.press_toggle_screenshot)
         self.toggle_autopaste = tk.Button(self.window, text="Toggle auto-paste: ON", command=self.press_auto_paste)
-        self.detect_threshold_slider = tk.Scale(self.window, from_=0, to=100, orient=tk.HORIZONTAL, label="Change Detection Threshold: (higher = less sensitive to frame changes)")
+        self.detect_threshold_slider = tk.Scale(self.window, from_=0, to=100, orient=tk.HORIZONTAL, label="Detection Threshold: (higher = less sensitive to frame changes)")
         self.detect_threshold_slider.set(20)
 
         self.set_ss_area.grid                   (column=0, row=0, sticky='nsew', rowspan=3)
