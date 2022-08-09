@@ -14,23 +14,38 @@ class auto_screenshot():
 
     SS_REGION = []
     SAMPLE_REGION = []
-    DIFFERENCES = [1]
     SESSION_SS_CACHE = set()
     SSIM_THRESHOLD = 0.8
     
-    
+    # debugging variable
     ss_count = 0
-
-    def avg_img_difference(self):
-        return sum(self.DIFFERENCES)/len(self.DIFFERENCES)
-
-
-    def mse(self, imageA, imageB):
-        err = np.sum((imageA.astype("float") - imageB.astype("float")) ** 2)
-        err /= float(imageA.shape[0] * imageA.shape[1])        
-        return err
     
+    
+    def screenshot_action(self):
+        #print(np.sum(self.subtracted), self.avg_img_difference(), sep=', ')
 
+        #if len(self.DIFFERENCES) > 100:
+            #self.DIFFERENCES = [self.avg_img_difference()]
+        
+        # copy screenshot to clipboard
+        self.output = BytesIO()            
+        self.take_screenshot = self.current_frame
+        self.SESSION_SS_CACHE.add(self.current_frame_bytes)
+        self.take_screenshot.convert('RGB').save(self.output, 'BMP')
+        self.ss_data = self.output.getvalue()[14:]
+        clip.OpenClipboard()
+        clip.EmptyClipboard()
+        clip.SetClipboardData(win32con.CF_DIB, self.ss_data)
+        clip.CloseClipboard()
+        
+        self.ss_count += 1
+        print(f"Screenshot! {self.ss_count}")    
+        #cv2.waitKey(300)
+
+        if gui.auto_paste_activation:
+            pyautogui.hotkey('ctrl','v')    
+    
+    
     def autoscreenshot(self):
         
         # Reminders: this function is contained in a recursion loop until cancelled.
@@ -67,8 +82,6 @@ class auto_screenshot():
         else:
             self.view_sample_region(self.subtracted, state=False)
 
-        #cv2.imshow('window', self.subtracted)
-        #self.DIFFERENCES.append(np.sum(self.subtracted)) 
         print(ssim(snapshot1, snapshot2, full=True)[0])
         
         self.current_frame = ImageGrab.grab(bbox=(self.SS_REGION[0][0], self.SS_REGION[0][1], self.SS_REGION[1][0], self.SS_REGION[1][1]))
@@ -77,28 +90,7 @@ class auto_screenshot():
         self.ssim_score = ssim(snapshot1, snapshot2, full=True)[0]
                                     #self.mse(snapshot1, snapshot2) > 0 and 
         if self.ssim_score <= self.SSIM_THRESHOLD and self.current_frame_bytes not in self.SESSION_SS_CACHE:
-            #print(np.sum(self.subtracted), self.avg_img_difference(), sep=', ')
-
-            #if len(self.DIFFERENCES) > 100:
-                #self.DIFFERENCES = [self.avg_img_difference()]
-            
-            # copy screenshot to clipboard
-            self.output = BytesIO()            
-            self.take_screenshot = self.current_frame
-            self.SESSION_SS_CACHE.add(self.current_frame_bytes)
-            self.take_screenshot.convert('RGB').save(self.output, 'BMP')
-            self.ss_data = self.output.getvalue()[14:]
-            clip.OpenClipboard()
-            clip.EmptyClipboard()
-            clip.SetClipboardData(win32con.CF_DIB, self.ss_data)
-            clip.CloseClipboard()
-            
-            self.ss_count += 1
-            print(f"Screenshot! {self.ss_count}")    
-            #cv2.waitKey(300)
-
-            if gui.auto_paste_activation:
-                pyautogui.hotkey('ctrl','v')
+            self.screenshot_action()
 
         # ....... <<< END INSERT CODE 
         if end_auto:
@@ -158,7 +150,7 @@ class auto_screenshot():
     
     def view_screenshot_region(self,state=1):
         if state:
-            global screenshot
+            #global screenshot
             self.screenshot = cv2.cvtColor(np.array(ImageGrab.grab(bbox=(self.SS_REGION[0][0], self.SS_REGION[0][1], self.SS_REGION[1][0], self.SS_REGION[1][1]))), cv2.COLOR_RGB2BGR)
             cv2.imshow('screenshot', self.screenshot)
             
@@ -171,7 +163,6 @@ class auto_screenshot():
 
     def view_sample_region(self, sample, state=bool, update=False):
         if state:
-            
             if update:
                 self.screenshot = sample
                 cv2.imshow('SAMPLE', self.screenshot)
