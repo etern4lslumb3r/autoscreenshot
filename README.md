@@ -1,9 +1,9 @@
 # AutoScreenshot
 
-Program for those who intend to attend online classes but unfortunate circumstances have rendered such impossible. (or too lazy to listen).
+Program for those who wish to save screenshots of videos such as online lecture powerpoints without the need for the tedious screenshot process. 
 
 
-This program will automatically take screenshots, save it to your clipboard, and paste it onto a online document of your choosing, whether that be Google Docs, Microsoft Word,
+This program will automatically take screenshots based on frame changes, save it to your clipboard, and paste it onto a online document of your choosing, whether that be Google Docs, Microsoft Word,
 or any other platforms which support the ability to paste in images.
 
 # How it works
@@ -19,5 +19,5 @@ or any other platforms which support the ability to paste in images.
 
 # Potential Bugs
 - When the `AutoScreenshot` feature is running, there might be a delay in button presses of the GUI.
-  - This is caused by the program's detect image change algorithm, where it's taking 2 snapshots, separated by time from each other using `cv2.waitKey(1000)`.
+  - This is caused by the program's detect image change algorithm, where it's taking 2 snapshots, separated by time from each other using `cv2.waitKey(ms)`.
   This causes the GUI to wait for 1000ms before registering any user input.
